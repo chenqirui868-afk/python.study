@@ -25,6 +25,7 @@ Hello! I'm **QiRui Chen**, a student interested in business and finance. I'm pas
 
 Check out my repositories for ongoing learning projects and coding experiments.
 
----
+## My future direction
+Business Analysis + Finance ➡️Fintech
 
 **Last Updated**: 2026-09-02
