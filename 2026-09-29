@@ -1,0 +1,12 @@
+# Daily Log - September 29, 2026
+
+## Python Progress
+- Successfully added a discount feature to my invoice generator.
+- Learned how to take a percentage input (like 10) and divide it by 100 to perform calculations.
+- The program now calculates: subtotal, discount amount, discounted price, GST (15%), and total.
+
+## Where I got stuck
+- No major errors. The logic worked smoothly.
+
+## What I'll do tomorrow
+- Learn `if/else` logic to make the discount automatic based on membership status.
