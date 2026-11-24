@@ -2,59 +2,70 @@ from pathlib import Path
 
 import pandas as pd
 
+# Resolve paths relative to this script so the file works from any working directory.
 base_dir = Path(__file__).resolve().parent
-customer = pd.read_csv(base_dir / "customers.csv")
-orders = pd.read_csv(base_dir / "orders.csv")
+orders = pd.read_csv(base_dir / "data" / "orders.csv")
+customers = pd.read_csv(base_dir / "data" / "customers.csv")
 
-print("Customers Shape:", customer.shape)
-print("Orders Shape:", orders.shape)
+print("Orders Shape:")
+print(orders.shape)
 
-print(customer.info())
+print("Customers Shape:")
+print(customers.shape)
+
+print("Orders Info:")
 print(orders.info())
 
-print("Customers Missing:")
-print(customer.isnull().sum())
-print("Orders Missing:")
-print(orders.isnull().sum())
+print("Customers Info:")
+print(customers.info())
 
-print("Customers Duplicates:")
-print(customer.duplicated().sum())
-print("Orders Duplicated:")
-print(orders.duplicated().sum())
+print("Orders Status:")
+print(orders["Status"].value_counts())
 
-print("Customers Duplicate Rows:")
-print(customer.duplicated(keep=False))
-print("Orders Duplicate Rows:")
-print(orders.duplicated(keep=False))
+print("Duplicate Order IDs:")
+print(orders.duplicated(subset=["Order_ID"]).sum())
 
-print("Orders Missing Rows:")
-print(orders[orders.isnull().any(axis=1)])
+orders["Order_Date"] = pd.to_datetime(orders["Order_Date"], errors="coerce")
+print(orders["Order_Date"].dtype)
 
-print("Customers Duplicate:")
-print(customer[customer.duplicated(keep=False)])
-print("Orders Duplicate:")
-print(orders[orders.duplicated(keep=False)])
+# Filter completed transactions and remove duplicate order IDs.
+completed_orders = orders.loc[
+    orders["Status"] == "Completed"
+].copy()
 
-customer = customer.drop_duplicates()
-orders = orders.drop_duplicates()
 
-print("Customers Duplicates After Cleaning:")
-print(customer.duplicated().sum())
-print("Orders Duplicated After Cleaning:")
-print(orders.duplicated().sum())
+# Clean fields used for RFM analysis.
+completed_orders["Quantity"] = pd.to_numeric(
+    completed_orders["Quantity"], errors="coerce"
+)
+completed_orders["Unit_Price"] = pd.to_numeric(
+    completed_orders["Unit_Price"], errors="coerce"
+)
+completed_orders = completed_orders.dropna(
+    subset=["Customer_ID", "Order_Date", "Quantity", "Unit_Price"]
+)
+completed_orders["Sales"] = (
+    completed_orders["Quantity"] * completed_orders["Unit_Price"]
+)
 
-print("Missing Unit_Price:")
-print(orders[orders["Unit_Price"].isna()])
+print("\nCompleted Orders:")
+print(completed_orders.shape)
+print(completed_orders.head())
 
-print("Missing Customer_ID:")
-print(orders[orders["Customer_ID"].isna()])
+print("\nMost Recent Completed Order Per Customer:")
+print(completed_orders.groupby("Customer_ID", as_index=False)["Order_Date"].max())
 
-keyboard_orders = orders[
-    orders["Product"] == "Keyboard"
-]
-
-print(keyboard_orders)
-
-print(orders.groupby("Product")["Unit_Price"].agg(
-    ["count", "min", "max", "mean", "median"]
-))
+last_purchase = completed_orders.groupby("Customer_ID")["Order_Date"].max()
+reference_date = pd.to_datetime("2025-06-13")
+recency = (reference_date - last_purchase).dt.days
+print(recency)
+frequency = completed_orders.groupby("Customer_ID")["Order_ID"].nunique()
+print(frequency)
+monetary = completed_orders.groupby("Customer_ID")["Sales"].sum()
+print(monetary)
+rfm = pd.concat([recency, frequency, monetary], axis=1)
+rfm.columns = ["Recency", "Frequency", "Monetary"]
+rfm = rfm.reset_index().rename(columns={"index": "Customer_ID"})
+print("===== NEW RFM OUTPUT =====")
+print(rfm)
+print(rfm.columns)
