@@ -108,3 +108,42 @@ rfm["R_Score"] = pd.qcut(
     labels=[5, 4, 3, 2, 1]
 )
 print(rfm[["Customer_ID", "Monetary", "M_Score", "Recency", "R_Score"]])
+rfm["F_Score"] = rfm["Frequency"].map({1:1,2:5})
+print(rfm[["Customer_ID","Frequency","F_Score"]])
+rfm["RFM_Score"] = (rfm["R_Score"].astype(str) + rfm["F_Score"].astype(str) + rfm["M_Score"].astype(str))
+print(rfm[["Customer_ID","R_Score","F_Score","M_Score","RFM_Score"]])
+rfm["M_Quantile"] = pd.qcut(
+    rfm["Monetary"],
+    q=5,
+    labels=["Q1","Q2","Q3","Q4","Q5"]
+)
+print(rfm[["Customer_ID","Monetary","M_Quantile"]])
+rfm["M_Bin"] = pd.cut(
+    rfm["Monetary"],
+    bins = 5,
+    labels=["Q1","Q2","Q3","Q4","Q5"]
+)
+print(rfm[["Customer_ID","Monetary","M_Bin"]])
+customer_sales = pd.pivot_table(
+    completed_orders,
+    values="Sales",
+    index="Customer_ID",
+    aggfunc="sum"
+)
+print(customer_sales)
+sales_by_category=pd.pivot_table(
+    completed_orders,
+    values="Sales",
+    index="Customer_ID",
+    columns="Category",
+    aggfunc="sum",
+    fill_value=0
+)
+print(sales_by_category)
+average_order_value = monetary / frequency
+print(average_order_value)
+
+sorted_aov = average_order_value.sort_values(ascending=False)
+print(sorted_aov)
+sorted_aov = average_order_value.sort_values(ascending=False).head(3)
+print(sorted_aov)
